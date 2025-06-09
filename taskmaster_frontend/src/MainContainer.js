@@ -1,5 +1,7 @@
 import React, { useState, useRef } from "react";
 import "./MainContainer.css";
+import Header from "./Header";
+import "./Header.css";
 
 // Timer Popup Component
 // PUBLIC_INTERFACE
@@ -240,27 +242,52 @@ function MainContainer() {
     return `${m}m ${sec}s`;
   }
 
+  // Theme state + handler
+  const [theme, setTheme] = useState("light");
+  // Demo user and notification count (for now)
+  const user = { name: "Alex Doe", avatarUrl: "" };
+  const notifications = 2;
+  // Sync body/theme variable for dark mode
+  React.useEffect(() => {
+    document.body.classList.toggle("tm-dark", theme === "dark");
+    // Also swap CSS vars for App.css (root) if needed
+    if (theme === "dark") {
+      document.documentElement.style.setProperty('--base-dark', '#181926');
+      document.documentElement.style.setProperty('--base-light', '#25f6d2');
+      document.documentElement.style.setProperty('--text-color', '#d7fff8');
+    } else {
+      document.documentElement.style.setProperty('--base-dark', '#00008b');
+      document.documentElement.style.setProperty('--base-light', '#00ffff');
+      document.documentElement.style.setProperty('--text-color', '#fff');
+    }
+  }, [theme]);
+  const handleThemeToggle = () => {
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  };
+
   // MAIN UI RENDER
   return (
     <div className="tm-main-bg">
       <AbstractShapes />
-
-      {/* Header */}
-      <header className="tm-header">
-        <h1 className="tm-title-text">TaskMaster</h1>
-        <button
-          className="tm-fab"
-          title="Add task"
-          onClick={handleAddTask}
-          aria-label="Add task"
-          style={{ zIndex: 2 }}
-        >
-          +
-        </button>
-      </header>
+      <Header
+        user={user}
+        notifications={notifications}
+        onThemeToggle={handleThemeToggle}
+        theme={theme}
+      />
+      {/* FAB add task button for mobile/desktop */}
+      <button
+        className="tm-fab"
+        title="Add task"
+        onClick={handleAddTask}
+        aria-label="Add task"
+        style={{ zIndex: 2 }}
+      >
+        +
+      </button>
 
       {/* Main: Task List */}
-      <main className="tm-main">
+      <main className="tm-main" style={{ marginTop: "32px" }}>
         <div className="tm-task-list-wrapper">
           {tasks.length === 0 && (
             <div className="tm-empty-tasks">
