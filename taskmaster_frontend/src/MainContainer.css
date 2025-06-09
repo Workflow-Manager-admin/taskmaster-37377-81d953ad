@@ -2,10 +2,85 @@
   min-height: 100vh;
   width: 100vw;
   overflow-x: hidden;
-  background: linear-gradient(125deg, #e0bbff 0%, #b2e0ff 100%);
   position: relative;
   z-index: 0;
 }
+
+/* --- Animated Gradient Background --- */
+.tm-animated-bg {
+  position: fixed;
+  width: 100vw; height: 100vh;
+  top: 0; left: 0;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--gradient-bg,linear-gradient(125deg,#e0bbff 0%,#b2e0ff 100%));
+  animation: tmBgMain 12s ease-in-out infinite alternate;
+}
+
+@keyframes tmBgMain {
+  0% {
+    filter: hue-rotate(0deg) brightness(1) saturate(1.2);
+    background-position: 0% 40%;
+  }
+  45% { 
+    filter: hue-rotate(-12deg) brightness(1.09) saturate(1.1);
+    background-position: 40% 72%;
+  }
+  65% {
+    filter: hue-rotate(17deg) brightness(1.06) saturate(1.25);
+    background-position: 85% 20%;
+  }
+  100% {
+    filter: hue-rotate(43deg) brightness(1.11) saturate(1.13);
+    background-position: 100% 80%;
+  }
+}
+
+/* Frosted glass dashboard and card style */
+.tm-glass-panel, .tm-task-card {
+  background:
+    linear-gradient(120deg,var(--panel-glass,#f7fbfcaa) 96%,transparent 100%) 0 0/100% 100%,
+    var(--panel-glass,#f7fbfcaa);
+  backdrop-filter: blur(18px) saturate(1.45);
+  -webkit-backdrop-filter: blur(18px) saturate(1.45);
+  border-radius: 22px;
+  box-shadow: 0 6px 36px #00fff047, 0 1.5px 8px #1976d211;
+  border: 1.2px solid var(--border-color,#ccf4ff32);
+}
+
+/* Task Card = glass effect by default, tweak color for completion */
+.tm-task-card {
+  padding: 17px 16px 14px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  font-size: 1.09rem;
+  transition: 
+    box-shadow .21s cubic-bezier(0.6, 0.1, 0.2, 1),
+    transform .26s cubic-bezier(0.7,0,0.3,1.5),
+    opacity .36s;
+  will-change: transform, opacity;
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  background: linear-gradient(115deg,
+      var(--panel-glass,#fcffff85) 60%, #f5fafc46 120%);
+  /* For dark mode */
+  color: var(--text-color);
+}
+
+.tm-task-card.completed {
+  opacity: 0.91;
+  background: linear-gradient(110deg,#e0eaf8cc 60%, #f0f4fa88 90%);
+}
+
+.tm-task-card .tm-task-title {
+  font-weight: 500;
+  color: var(--text-color,#17192a);
+}
+
+/* Responsive design and accessibility updates below */
 .tm-bg-abstract {
   position: fixed;
   inset: 0;

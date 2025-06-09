@@ -2,8 +2,10 @@ import React, { useState, useRef } from "react";
 import "./MainContainer.css";
 import Header from "./Header";
 import "./Header.css";
+import ThemeSwitcher from "./ThemeSwitcher";
+import { useTheme } from "./theme";
 
-// Timer Popup Component
+/* Timer Popup Component */
 // PUBLIC_INTERFACE
 function TimerPopup({ visible, onClose, task, onStart, onPause, onReset, timerState, timeLeft }) {
   if (!visible) return null;
@@ -42,7 +44,7 @@ function TimerPopup({ visible, onClose, task, onStart, onPause, onReset, timerSt
   );
 }
 
-// Individual Task Card Component
+/* Individual Task Card Component */
 // PUBLIC_INTERFACE
 function TaskCard({
   task,
@@ -100,45 +102,45 @@ const MOTIVATIONAL_QUOTES = [
   "Stay focused and keep crushing it!",
 ];
 
-// Helper for pastel random shapes
+// Helper for pastel random shapes with theme awareness
 function AbstractShapes() {
+  const { theme } = useTheme();
+  // Use themed abstract shape backgrounds if provided
+  const abg = theme.abstract || [
+    "rgba(180,242,240,.18)",
+    "rgba(202,240,248,.16)",
+    "rgba(189,195,255,0.15)"
+  ];
   return (
-    <div className="tm-bg-abstract">
-      <div className="tm-shape tm-shape-1"/>
-      <div className="tm-shape tm-shape-2"/>
-      <div className="tm-shape tm-shape-3"/>
-      <div className="tm-shape tm-shape-4"/>
+    <div className="tm-bg-abstract" aria-hidden="true">
+      <div className="tm-shape tm-shape-1" style={{background: abg[0] || undefined}}/>
+      <div className="tm-shape tm-shape-2" style={{background: abg[1] || undefined}}/>
+      <div className="tm-shape tm-shape-3" style={{background: abg[2] || undefined}}/>
+      <div className="tm-shape tm-shape-4" />
     </div>
   );
 }
 
 // PUBLIC_INTERFACE
 function MainContainer() {
-  // Task state
+  // --- [ Task state, input state, animations, timers (all as before) ] ---
   const [tasks, setTasks] = useState([
     { id: 1, title: "Walk the dog", completed: false, duration: 0, },
     { id: 2, title: "Write code", completed: false, duration: 25 * 60 },
     { id: 3, title: "Read a book", completed: false, duration: 0 }
   ]);
-  // Add task state
   const [input, setInput] = useState("");
   const [duration, setDuration] = useState(0);
-
-  // Animations for card transitions
   const [enteringId, setEnteringId] = useState(null);
   const [removingId, setRemovingId] = useState(null);
-
-  // Timer popup
   const [showTimerId, setShowTimerId] = useState(null);
-  const [timerState, setTimerState] = useState("idle"); // 'idle', 'running', 'paused'
+  const [timerState, setTimerState] = useState("idle"); 
   const [timer, setTimer] = useState({ id: null, timeLeft: 0, origTime: 0 });
   const timerInterval = useRef(null);
 
-  // Motivational quote
   const quote = MOTIVATIONAL_QUOTES[new Date().getDate() % MOTIVATIONAL_QUOTES.length];
 
-  // Add task handler
-  // PUBLIC_INTERFACE
+  // --- [ Handlers as before ] ---
   const handleAddTask = () => {
     const title = input.trim();
     if (!title) return;
@@ -154,13 +156,9 @@ function MainContainer() {
     setInput("");
     setDuration(0);
   };
-
-  // PUBLIC_INTERFACE
   const handleToggle = (id) => {
     setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   };
-
-  // PUBLIC_INTERFACE
   const handleDelete = (id) => {
     setRemovingId(id);
     setTimeout(() => {
@@ -168,9 +166,7 @@ function MainContainer() {
       setRemovingId(null);
     }, 400);
   };
-
-  // Task timer popup logic
-  // PUBLIC_INTERFACE
+  // Timer logic...
   const handleShowTimer = (task) => {
     setShowTimerId(task.id);
     setTimerState("idle");
@@ -180,13 +176,11 @@ function MainContainer() {
       origTime: task.duration,
     });
   };
-  // PUBLIC_INTERFACE
   const handleCloseTimer = () => {
     setShowTimerId(null);
     setTimerState("idle");
     clearInterval(timerInterval.current);
   };
-  // PUBLIC_INTERFACE
   const handleTimerStart = () => {
     if (timer.timeLeft <= 0) return;
     setTimerState("running");
@@ -197,7 +191,6 @@ function MainContainer() {
         } else {
           clearInterval(timerInterval.current);
           setTimerState("idle");
-          // Optional: Use vibration or Notification
           if ("vibrate" in navigator) navigator.vibrate(200);
           alert("Timer finished!");
           return { ...t, timeLeft: 0 };
@@ -205,19 +198,15 @@ function MainContainer() {
       });
     }, 1000);
   };
-  // PUBLIC_INTERFACE
   const handleTimerPause = () => {
     setTimerState("paused");
     clearInterval(timerInterval.current);
   };
-  // PUBLIC_INTERFACE
   const handleTimerReset = () => {
     setTimerState("idle");
     clearInterval(timerInterval.current);
     setTimer((t) => ({ ...t, timeLeft: t.origTime }));
   };
-
-  // Keyboard "Enter" for input
   const handleInputKey = (e) => { if (e.key === "Enter") handleAddTask(); };
 
   // Counting & progress bar
@@ -225,7 +214,6 @@ function MainContainer() {
   const totalTasks = tasks.length;
   const progress = totalTasks === 0 ? 0 : ((totalTasks - tasksLeft) / totalTasks) * 100;
 
-  // Duration options for selection (pomodoro, custom)
   const durationOptions = [
     { label: "No timer", value: 0 },
     { label: "5 min", value: 5 * 60 },
@@ -233,7 +221,6 @@ function MainContainer() {
     { label: "25 min", value: 25 * 60 },
     { label: "50 min", value: 50 * 60 },
   ];
-  // PUBLIC_INTERFACE
   function formatTime(s) {
     if (!s) return "";
     const m = Math.floor(s / 60);
@@ -242,39 +229,44 @@ function MainContainer() {
     return `${m}m ${sec}s`;
   }
 
-  // Theme state + handler
-  const [theme, setTheme] = useState("light");
+  // Theme context (new)
+  const { theme } = useTheme();
+
   // Demo user and notification count (for now)
   const user = { name: "Alex Doe", avatarUrl: "" };
   const notifications = 2;
-  // Sync body/theme variable for dark mode
-  React.useEffect(() => {
-    document.body.classList.toggle("tm-dark", theme === "dark");
-    // Also swap CSS vars for App.css (root) if needed
-    if (theme === "dark") {
-      document.documentElement.style.setProperty('--base-dark', '#181926');
-      document.documentElement.style.setProperty('--base-light', '#25f6d2');
-      document.documentElement.style.setProperty('--text-color', '#d7fff8');
-    } else {
-      document.documentElement.style.setProperty('--base-dark', '#00008b');
-      document.documentElement.style.setProperty('--base-light', '#00ffff');
-      document.documentElement.style.setProperty('--text-color', '#fff');
-    }
-  }, [theme]);
+
+  // Header theme toggle wired to the theme context
   const handleThemeToggle = () => {
-    setTheme((t) => (t === "dark" ? "light" : "dark"));
+    // This will be handled by ThemeProvider in context,
+    // so call setThemeByKey for cycling dark/light.
+    if (typeof theme.setThemeByKey === "function") {
+      if (theme.isDark) {
+        // Go to first light in list (skip current)
+        const next = theme.key === "dark" ? "nature" : "minimal";
+        theme.setThemeByKey(next);
+      } else {
+        theme.setThemeByKey("dark");
+      }
+    }
   };
 
   // MAIN UI RENDER
   return (
-    <div className="tm-main-bg">
+    <div className="tm-main-bg" role="main">
+      {/* Animated background - sits behind everything */}
+      <div className="tm-animated-bg" aria-hidden="true" />
       <AbstractShapes />
       <Header
         user={user}
         notifications={notifications}
-        onThemeToggle={handleThemeToggle}
-        theme={theme}
+        onThemeToggle={theme.setThemeByKey ? handleThemeToggle : undefined}
+        theme={theme.key || (theme.isDark ? "dark" : "light")}
       />
+
+      {/* PREMIUM THEME SWITCHER */}
+      <ThemeSwitcher className="tm-dashboard-theme-panel" />
+
       {/* FAB add task button for mobile/desktop */}
       <button
         className="tm-fab"
@@ -286,11 +278,11 @@ function MainContainer() {
         +
       </button>
 
-      {/* Main: Task List */}
+      {/* Main: Task List with glass panel/card */}
       <main className="tm-main" style={{ marginTop: "32px" }}>
         <div className="tm-task-list-wrapper">
           {tasks.length === 0 && (
-            <div className="tm-empty-tasks">
+            <div className="tm-empty-tasks" role="status">
               <span role="img" aria-label="party">🎉</span>
               You have nothing left! Add a task.
             </div>
@@ -316,18 +308,20 @@ function MainContainer() {
       </main>
 
       {/* Add Task Input at Bottom */}
-      <div className="tm-add-task-row">
+      <div className="tm-add-task-row" role="form" aria-label="Add a new task">
         <input
           className="tm-add-input"
           value={input}
           placeholder="Type a new task…"
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleInputKey}
+          aria-label="Task title"
         />
         <select
           className="tm-add-select"
           value={duration}
           onChange={e => setDuration(Number(e.target.value))}
+          aria-label="Timer duration"
         >
           {durationOptions.map(opt =>
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -342,7 +336,7 @@ function MainContainer() {
       </div>
 
       {/* Footer with stats */}
-      <footer className="tm-footer">
+      <footer className="tm-footer" aria-label="Productivity stats">
         <div className="tm-footer-stats">
           <span>
             <strong>{tasksLeft}</strong> left{totalTasks ? ` of ${totalTasks}` : ""}
